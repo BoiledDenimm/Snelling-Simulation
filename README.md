@@ -13,7 +13,7 @@ From $SCALATION, run:
 	sbt compile
 	./scar DiningHall
 
-Within the DiningHall file, the variable nArrivals specifies the number of students to simulate eating at Snelling Dining Commons.  This will alter the length of the simulation and the resulting statistics.
+Within  **DiningHall.scala**, the variable nArrivals specifies the number of students to simulate eating at Snelling Dining Commons.  This will alter the length of the simulation and the resulting statistics.
 
 Change aniRatio if you would like to alter the speed of the simulation's animation.
     Note: > aniRatio's = slower animation speed
