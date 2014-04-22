@@ -4,14 +4,14 @@
 
 import scalation.process._
 import scalation.model.Modelable
-import scalation.random.{Discrete, Uniform, Variate}
+import scalation.random.{Discrete, Uniform, Variate, Normal}
 import scalation.linalgebra.VectorD
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 /** The `DiningHall` object is used to run the `DiningHallModel` class.
  */
 object DiningHall extends App with Modelable
 {
-    val nArrivals = 500       // 
+    val nArrivals = 50       // 
     val iArrivalRV = Uniform(0.5, 0.3)
     
     val nCardScanners = 1
@@ -56,16 +56,26 @@ object DiningHall extends App with Modelable
 /** The `DiningHallModel` class defines a simple process-interaction model of DumpTrucks
  *  where dump trucks are loaded and weighed before traveling a certain amount of time to
  *  complete their journey back to the loading queue. 
- *  @param name        the name of the Dump Trucks model
- *  @param nArrivals   the number of arrivals/loads to generate per truck(stopping condition)
- *  @param nCardScanners    the number of loaders
- *  @param nScales     the number of scales
- *  @param iArrivalRV  the inter-arrival time between trucks (all arrive at the same time)
- *  @param loadingRV   the loading time distribution
- *  @param weighingRV  the weighing time distribution
- *  @param travelRV    the travel time distribution for motion from scale to railroad and back to loadingQ
- *  @param moveRV      the travel time distribution for motion from loader to scale (negligible)
- *  @param aniRatio    the ratio of simulation speed vs. animation speed
+ *  @param name        		the name of the model
+ *  @param nArrivals   		the number of arrivals
+ *  @param nCardScanners    the number of card scanners
+ *  @param nPizzaServers    the number of pizza servers
+ *  @param nGrillServers   	the number of grill servers
+ *  @param nMexicanServers  the number of mexican food servers
+ *  @param nSandwichServers the number of sandwich servers
+ *  @param nMainServers     the number of main food servers
+ *  @param nTables     		the number of tables
+ *  @param iArrivalRV  		the inter-arrival time between students
+ *  @param cardScannerRV   	the card scanning time distribution
+ *  @param pizzaRV  		the pizza serving time distribution
+ *  @param grillRV  		the grill serving time distribution
+ *  @param mexicanRV  		the mexican food serving time distribution
+ *  @param sandwichRV  		the sandwich serving time distribution
+ *  @param mainRV  			the main food serving time distribution
+ *  @param whatToEatRV  	the choice of food distribution
+ *  @param tableRV    		the distribution of time spent eating
+ *  @param moveRV      		distribution of student movement speed 
+ *  @param aniRatio    		the ratio of simulation speed vs. animation speed
  */
 class DiningHallModel (name: String, nArrivals: Int,  nCardScanners: Int, nPizzaServers: Int, nGrillServers: Int, nMexicanServers: Int, nSandwichServers: Int, 
     nMainServers: Int, nTables: Int, iArrivalRV: Variate, cardScannerRV: Variate, pizzaRV: Variate, grillRV: Variate, mexicanRV: Variate, sandwichRV: Variate, 
@@ -73,41 +83,41 @@ class DiningHallModel (name: String, nArrivals: Int,  nCardScanners: Int, nPizza
       extends Model (name, aniRatio)
 {
 	
-    val entrance = Source ("Welcome to Snelling", this, Student, 0, nArrivals, iArrivalRV, (25, 300))
+    val entrance = Source ("Entrance", this, Student, 0, nArrivals, iArrivalRV, (230, 300))
     
-    val scannerQ  	= WaitQueue ("scannerQ", (100, 300))
-    val scanner      = Resource ("scanner", scannerQ, nCardScanners, cardScannerRV, (120, 300))
+    val scannerQ  	= WaitQueue ("scannerQ", (330, 300))
+    val scanner      = Resource ("scanner", scannerQ, nCardScanners, cardScannerRV, (351, 295))
     val toScannerQ 	= new Transport ("toScannerQ", entrance, scannerQ, moveRV)
     
-    val pizzaQ  	= WaitQueue ("pizzaQ", (200, 100))
-    val pizza      = Resource ("pizza", pizzaQ, nPizzaServers, pizzaRV, (220, 100))
+    val pizzaQ  	= WaitQueue ("pizzaQ", (575, 100))
+    val pizza      = Resource ("pizza", pizzaQ, nPizzaServers, pizzaRV, (596, 95))
     val toPizzaQ 	= new Transport ("toPizzaQ", scanner, pizzaQ, moveRV)
     
-    val grillQ  	= WaitQueue ("grillQ", (200, 200))
-    val grill      = Resource ("grill", grillQ, nGrillServers, grillRV, (220, 200))
+    val grillQ  	= WaitQueue ("grillQ", (575, 200))
+    val grill      = Resource ("grill", grillQ, nGrillServers, grillRV, (596, 195))
     val toGrillQ 	= new Transport ("toGrillQ", scanner, grillQ, moveRV)
     
-    val mexicanQ  	= WaitQueue ("mexicanQ", (200, 300))
-    val mexican      = Resource ("mexican", mexicanQ, nMexicanServers, mexicanRV, (220, 300))
+    val mexicanQ  	= WaitQueue ("mexicanQ", (575, 300))
+    val mexican      = Resource ("mexican", mexicanQ, nMexicanServers, mexicanRV, (596, 295))
     val toMexicanQ 	= new Transport ("toMexicanQ", scanner, mexicanQ, moveRV)
     
-    val sandwichQ  	= WaitQueue ("sandwichQ", (200, 400))
-    val sandwich      = Resource ("sandwich", sandwichQ, nSandwichServers, sandwichRV, (220, 400))
+    val sandwichQ  	= WaitQueue ("sandwichQ", (575, 400))
+    val sandwich      = Resource ("sandwich", sandwichQ, nSandwichServers, sandwichRV, (596, 395))
     val toSandwichQ 	= new Transport ("toSandwichQ", scanner, sandwichQ, moveRV)
     
-    val mainQ  	= WaitQueue ("mainQ", (200, 500))
-    val main      = Resource ("main", mainQ, nMainServers, mainRV, (220, 500))
+    val mainQ  	= WaitQueue ("mainQ", (575, 500))
+    val main      = Resource ("main", mainQ, nMainServers, mainRV, (596, 495))
     val toMainQ 	= new Transport ("toMainQ", scanner, mainQ, moveRV)
     
-    val tableQ  	= WaitQueue ("tableQ", (300, 300))
-    val table      = Resource ("table", tableQ, nTables, tableRV, (320, 300))
+    val tableQ  	= WaitQueue ("tableQ", (815, 300))
+    val table      = Resource ("table", tableQ, nTables, tableRV, (836, 295))
     val toTableQ1 	= new Transport ("toTableQ", pizza, tableQ, moveRV)
     val toTableQ2 	= new Transport ("toTableQ", mexican, tableQ, moveRV)
     val toTableQ3 	= new Transport ("toTableQ", grill, tableQ, moveRV)
     val toTableQ4 	= new Transport ("toTableQ", sandwich, tableQ, moveRV)
     val toTableQ5 	= new Transport ("toTableQ", main, tableQ, moveRV)
     
-    val diningHallExit = Sink ("Snelling Exit", (320, 600))
+    val diningHallExit = Sink ("Exit", (846, 500))
     val toDiningHallExit 	= new Transport ("toDiningHallExit", table, diningHallExit, moveRV)
 
     addComponent (entrance, scannerQ, scanner, toScannerQ, pizzaQ, pizza, toPizzaQ, grillQ, grill, toGrillQ, mexicanQ, mexican, toMexicanQ, 
