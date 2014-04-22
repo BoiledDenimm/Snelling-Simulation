@@ -12,7 +12,9 @@ import scalation.linalgebra.VectorD
 object DiningHall extends App with Modelable
 {
     val nArrivals = 50       // 
+    val nExisting = 200
     val iArrivalRV = Uniform(0.5, 0.3)
+    val existingRV = Uniform(0,0)
     
     val nCardScanners = 1
     val cardScannerRV = Uniform(0.5, 0.3)
@@ -42,8 +44,8 @@ object DiningHall extends App with Modelable
      */
     def simulate (startTime: Double)
     {
-        val bm = new DiningHallModel ("Snelling", nArrivals, nCardScanners, nPizzaServers, nGrillServers, nMexicanServers, nSandwichServers,
-            nMainServers, nTables, iArrivalRV, cardScannerRV, pizzaRV, grillRV, mexicanRV, sandwichRV, mainRV, whatToEatRV, tableRV, moveRV, aniRatio)
+        val bm = new DiningHallModel ("Snelling", nArrivals, nExisting, nCardScanners, nPizzaServers, nGrillServers, nMexicanServers, nSandwichServers,
+            nMainServers, nTables, iArrivalRV, existingRV, cardScannerRV, pizzaRV, grillRV, mexicanRV, sandwichRV, mainRV, whatToEatRV, tableRV, moveRV, aniRatio)
         bm.simulate ()
     } // simulate
 
@@ -53,11 +55,11 @@ object DiningHall extends App with Modelable
 
 
 //::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-/** The `DiningHallModel` class defines a simple process-interaction model of DumpTrucks
- *  where dump trucks are loaded and weighed before traveling a certain amount of time to
- *  complete their journey back to the loading queue. 
+/** The `DiningHallModel` class defines a simple process-interaction model of a Dining Hall
+ *  where students enter the dining hall, get food, sit down to eat, and then leave
  *  @param name        		the name of the model
  *  @param nArrivals   		the number of arrivals
+ *  @param nExisting   		the number of existing
  *  @param nCardScanners    the number of card scanners
  *  @param nPizzaServers    the number of pizza servers
  *  @param nGrillServers   	the number of grill servers
@@ -77,13 +79,14 @@ object DiningHall extends App with Modelable
  *  @param moveRV      		distribution of student movement speed 
  *  @param aniRatio    		the ratio of simulation speed vs. animation speed
  */
-class DiningHallModel (name: String, nArrivals: Int,  nCardScanners: Int, nPizzaServers: Int, nGrillServers: Int, nMexicanServers: Int, nSandwichServers: Int, 
-    nMainServers: Int, nTables: Int, iArrivalRV: Variate, cardScannerRV: Variate, pizzaRV: Variate, grillRV: Variate, mexicanRV: Variate, sandwichRV: Variate, 
+class DiningHallModel (name: String, nArrivals: Int, nExisting: Int, nCardScanners: Int, nPizzaServers: Int, nGrillServers: Int, nMexicanServers: Int, nSandwichServers: Int, 
+    nMainServers: Int, nTables: Int, iArrivalRV: Variate, existingRV: Variate, cardScannerRV: Variate, pizzaRV: Variate, grillRV: Variate, mexicanRV: Variate, sandwichRV: Variate, 
     mainRV: Variate, whatToEatRV: Variate, tableRV: Variate, moveRV: Variate, aniRatio: Double)
       extends Model (name, aniRatio)
 {
 	
     val entrance = Source ("Entrance", this, Student, 0, nArrivals, iArrivalRV, (230, 300))
+    val existingPpl = Source("Existing People", this, ExistingStudents, 0, nExisting, existingRV, (815, 100))
     
     val scannerQ  	= WaitQueue ("scannerQ", (330, 300))
     val scanner      = Resource ("scanner", scannerQ, nCardScanners, cardScannerRV, (351, 295))
@@ -120,15 +123,13 @@ class DiningHallModel (name: String, nArrivals: Int,  nCardScanners: Int, nPizza
     val diningHallExit = Sink ("Exit", (846, 500))
     val toDiningHallExit 	= new Transport ("toDiningHallExit", table, diningHallExit, moveRV)
 
-    addComponent (entrance, scannerQ, scanner, toScannerQ, pizzaQ, pizza, toPizzaQ, grillQ, grill, toGrillQ, mexicanQ, mexican, toMexicanQ, 
+    addComponent (entrance, existingPpl, scannerQ, scanner, toScannerQ, pizzaQ, pizza, toPizzaQ, grillQ, grill, toGrillQ, mexicanQ, mexican, toMexicanQ, 
         sandwichQ, sandwich, toSandwichQ, mainQ, main, toMainQ, tableQ, table, toTableQ1, toTableQ2, toTableQ3, toTableQ4, toTableQ5, diningHallExit, toDiningHallExit)
 
     case class Student extends SimActor ("s", this) 
     {
         def act ()
         {
-          
-          
           
         	toScannerQ.move ()
             if (scanner.busy) 
@@ -198,6 +199,22 @@ class DiningHallModel (name: String, nArrivals: Int,  nCardScanners: Int, nPizza
             table.release ()
             
             diningHallExit.leave ()
+        } // act
+
+    } // Students
+    
+    case class ExistingStudents extends SimActor ("es", this) 
+    {
+        def act ()
+        {
+          
+          if (table.busy) 
+              tableQ.waitIn ()
+            else tableQ.noWait ()
+            table.utilize ()
+            table.release ()
+          
+          diningHallExit.leave ()
         } // act
 
     } // Students
